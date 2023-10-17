@@ -96,6 +96,7 @@ static pin_t host_led_pin_list[HOST_DEVICES_COUNT] = HOST_LED_PIN_LIST;
 #    define SET_LED_BT(idx) led_matrix_set_value(idx, 255)
 #    define SET_LED_LOW_BAT(idx) led_matrix_set_value(idx, 255)
 #    define LED_DRIVER_IS_ENABLED led_matrix_is_enabled
+#    define LED_DRIVER_GET_SUSPEND_STATE led_matrix_get_suspend_state
 #    define LED_DRIVER_EECONFIG_RELOAD() \
         eeprom_read_block(&led_matrix_eeconfig, EECONFIG_LED_MATRIX, sizeof(led_matrix_eeconfig)); \
         if (!led_matrix_eeconfig.mode) { \
@@ -106,6 +107,9 @@ static pin_t host_led_pin_list[HOST_DEVICES_COUNT] = HOST_LED_PIN_LIST;
 #    define LED_DRIVER_DISABLE_NOEEPROM led_matrix_disable_noeeprom
 #    define LED_DRIVER_DISABLE_TIMEOUT_SET led_matrix_disable_timeout_set
 #    define LED_DRIVER_DISABLE_TIME_RESET led_matrix_disable_time_reset
+#    ifdef LED_DISABLE_WHEN_USB_SUSPENDED
+#       define LED_DRIVER_DISABLE_WHEN_USB_SUSPENDED
+#    endif
 #endif
 
 #ifdef RGB_MATRIX_ENABLE
@@ -119,6 +123,7 @@ static pin_t host_led_pin_list[HOST_DEVICES_COUNT] = HOST_LED_PIN_LIST;
 #    define SET_LED_BT(idx) rgb_matrix_set_color(idx, 0, 0, 255)
 #    define SET_LED_LOW_BAT(idx) rgb_matrix_set_color(idx, 255, 0, 0)
 #    define LED_DRIVER_IS_ENABLED rgb_matrix_is_enabled
+#    define LED_DRIVER_GET_SUSPEND_STATE rgb_matrix_get_suspend_state
 #    define LED_DRIVER_EECONFIG_RELOAD() \
         eeprom_read_block(&rgb_matrix_config, EECONFIG_RGB_MATRIX, sizeof(rgb_matrix_config)); \
         if (!rgb_matrix_config.mode) {  \
@@ -129,6 +134,9 @@ static pin_t host_led_pin_list[HOST_DEVICES_COUNT] = HOST_LED_PIN_LIST;
 #    define LED_DRIVER_DISABLE_NOEEPROM rgb_matrix_disable_noeeprom
 #    define LED_DRIVER_DISABLE_TIMEOUT_SET rgb_matrix_disable_timeout_set
 #    define LED_DRIVER_DISABLE_TIME_RESET rgb_matrix_disable_time_reset
+#    ifdef RGB_DISABLE_WHEN_USB_SUSPENDED
+#       define LED_DRIVER_DISABLE_WHEN_USB_SUSPENDED
+#    endif
 #endif
 void indicator_init(void) {
     memset(&indicator_config, 0, sizeof(indicator_config));
@@ -477,6 +485,11 @@ void indicator_task(void) {
 
 #if defined(LED_MATRIX_ENABLE) || defined(RGB_MATRIX_ENABLE)
 __attribute__((weak)) void os_state_indicate(void) {
+#    if defined(LED_DRIVER_DISABLE_WHEN_USB_SUSPENDED)
+    if (LED_DRIVER_GET_SUSPEND_STATE()) {
+        return;
+    }
+#    endif
 #    if defined(NUM_LOCK_INDEX)
     if (host_keyboard_led_state().num_lock) {
         SET_LED_ON(NUM_LOCK_INDEX);
@@ -585,6 +598,11 @@ void LED_NONE_INDICATORS_KB(void) {
 
 #    if defined(LED_MATRIX_DRIVER_SHUTDOWN_ENABLE) || defined(RGB_MATRIX_DRIVER_SHUTDOWN_ENABLE)
 bool LED_DRIVER_ALLOW_SHUTDOWN(void) {
+#        if defined(LED_DRIVER_DISABLE_WHEN_USB_SUSPENDED)
+    if (LED_DRIVER_GET_SUSPEND_STATE()) {
+        return true;
+    }
+#        endif
 #        if defined(NUM_LOCK_INDEX)
     if (host_keyboard_led_state().num_lock) return false;
 #        endif
