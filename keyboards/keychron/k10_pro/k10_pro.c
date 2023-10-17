@@ -150,7 +150,7 @@ void keyboard_post_init_kb(void) {
 
     power_on_indicator_timer_buffer = sync_timer_read32() | 1;
     writePin(BAT_LOW_LED_PIN, BAT_LOW_LED_PIN_ON_STATE);
-    writePin(LED_CAPS_LOCK_PIN, LED_PIN_ON_STATE);
+    writePin(A7, LED_PIN_ON_STATE);
 #    ifdef KC_BLUETOOTH_ENABLE
     writePin(H3, HOST_LED_PIN_ON_STATE);
 #    endif
@@ -165,11 +165,11 @@ void matrix_scan_kb(void) {
 
             writePin(BAT_LOW_LED_PIN, !BAT_LOW_LED_PIN_ON_STATE);
             writePin(H3, !HOST_LED_PIN_ON_STATE);
-            if (!host_keyboard_led_state().caps_lock) writePin(LED_CAPS_LOCK_PIN, !LED_PIN_ON_STATE);
+            writePin(A7, !LED_PIN_ON_STATE);
         } else {
             writePin(BAT_LOW_LED_PIN, BAT_LOW_LED_PIN_ON_STATE);
             writePin(H3, HOST_LED_PIN_ON_STATE);
-            writePin(LED_CAPS_LOCK_PIN, LED_PIN_ON_STATE);
+            writePin(A7, LED_PIN_ON_STATE);
         }
     }
 
